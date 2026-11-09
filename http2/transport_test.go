@@ -5880,3 +5880,17 @@ func TestExtendedConnectClientWithoutServerSupport(t *testing.T) {
 		t.Fatalf("expected error errExtendedConnectNotSupported, got: %v", err)
 	}
 }
+
+func TestTransportDoNotHangOnZeroMaxFrameSize(t *testing.T) {
+	tc := newTestClientConn(t)
+	tc.wantFrameType(FrameSettings)
+	tc.wantFrameType(FrameWindowUpdate)
+
+	tc.writeSettings(Setting{ID: SettingMaxFrameSize, Val: 0})
+
+	req, _ := http.NewRequest("POST", "https://dummy.tld/", strings.NewReader("body"))
+	rt := tc.roundTrip(req)
+	if rt.err() == nil {
+		t.Fatalf("expected error for zero max frame size")
+	}
+}
